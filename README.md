@@ -110,7 +110,11 @@ Melody note), and the agent's action is to select the next
 chord. There are 576 states and 48 discrete actions,
 which remains reasonable in terms of calculations.
 
-![At a given step, the agent is in state t described by (Chord_chord_type, Melody_note). The agent takes an action t, consisting of choosing the next chord. The environment is defined by initial_state, melody_notes, frequencies_matrix, MaxiReward, MinReward, BonusReward and NegReward. Once action t is taken, the environment will inform the agent of the new reward r(t+1) and the new state s(t+1).](<Chord accompaniment loop schema.png>)
+<div style="flex: 48%;">
+    <p align="center">
+      <img src="Chord accompaniment loop schema.png" alt="At a given step, the agent is in state t described by (Chord_chord_type, Melody_note). The agent takes an action t, consisting of choosing the next chord. The environment is defined by initial_state, melody_notes, frequencies_matrix, MaxiReward, MinReward, BonusReward and NegReward. Once action t is taken, the environment will inform the agent of the new reward r(t+1) and the new state s(t+1)." style="width: 70%;">
+    </p>
+</div>
 
 When it comes to the most important part of the
 environment, which is the reward structure, we
@@ -120,7 +124,11 @@ transitions we’ve collected from musical datasets, and
 a *legal reward* that captures the consistency of the
 action with respect to music theory rules.
 
-![Chord accompaniment step function and reward structure](<Chord Accompaniment Step Function.png>)
+<div style="flex: 48%;">
+    <p align="center">
+      <img src="Chord Accompaniment Step Function.png" alt="Chord accompaniment step function and reward structure" style="width: 70%;">
+    </p>
+</div>
 
 These rewards are a function of 4 hyperparameters that
 we need to tune before using the environment to train
@@ -129,33 +137,17 @@ these parameters that allow the environment to
 distinguish between *good* and *bad* chord
 progressions. Below is an example of rewards given to a *good* chord progression (in blue) and a *bad* chord progression (in orange), under defined parameter values:
 
-![Rewards for a good vs bad chord progression](<Rewards good vs bad chord progressions.png>)
+<div style="flex: 48%;">
+    <p align="center">
+      <img src="Rewards good vs bad chord progressions.png" alt="Rewards for a good vs bad chord progression" style="width: 60%;">
+    </p>
+</div>
 
 On this chart, we notice that the reward at each timestep (new chord decision / action taken) is higher for the good chord progression than the bad one. The only timestep at which the rewards are pretty close is the last one as a high reward is given to chord progressions that satisfy the rule of starting and ending on the same chord, and the 2 chord progressions displayed follow this rule.
 
 To better understand the role of each hyperparameter we introduced, here are the detailed formulas for each subcomponent of our rewards:
 
-$$
-r^{\text{emp}}_t 
-=
-\left\{
-\begin{align}
-  &\text{If $\hat{\mathbb{P}}$($C_t$, $M_t$) > 0,} \quad \text{MaxiReward}*\text{$\hat{\mathbb{P}}$($C_t$, $M_t$)} \nonumber \\
-  & \text{Otherwise,} \quad \text{MiniReward} \nonumber
-\end{align}
-\right.
-$$
-
-$$
-r^{\text{leg}}_t 
-=
-\left\{
-\begin{align}
-  &\text{If rules are respected,} \quad \text{BonusReward} \nonumber \\
-  &\text{Otherwise,} \quad \text{NegReward} \nonumber
-\end{align}
-\right.
-$$
+![Rewards formula](<Rewards formula.png>)
 
 <h3> Algorithm Design </h3>
 
@@ -179,7 +171,11 @@ Besides, to ensure that our results are satisfying, we have implemented a baseli
 
 Below is the pseudocode for the policy-based algorithm: (*sources: Achiam, 2017 and Heeswijk, 2022*)
 
-![Pseudo code PPO with clipped objective](<Pseudo code PPO with clipped obj.png>)
+<div style="flex: 48%;">
+    <p align="center">
+      <img src="Pseudo code PPO with clipped obj.png" alt="Pseudo code PPO with clipped objective" style="width: 70%;">
+    </p>
+</div>
 
 As shown above, during each epoch, we gather trajectories according to policy $\pi_k$. The preliminary step involves evaluating the advantages $A_t$ under the policy $\pi_k$ using neural networks to determine the best actions at every state. The advantage $A_t$ is calculated as the difference between the actual return-to-go $R_t$, which is the discounted expected cumulative future reward from each state, and the value estimate $V_t$ provided by the critic network for each state:
 
@@ -195,12 +191,7 @@ The first part is the actor loss:
 
 It is calculated using the importance sampling ratio $\left. \rho_t(\pi_\theta, \pi_{\theta_k} \right)$:
 
-$$
-\displaystyle
-\left. \rho_t(\pi_\theta, \pi_{\theta_k} \right)
-=
-\frac{\pi_\theta(a_t | s_t)}{\pi_{\theta_k}(a_t | s_t)}
-$$
+![Sampling ratio formula](<Sampling ratio formula.png>)
 
 which compares the probabilities of actions under the current and new policy iterations. 
 
@@ -208,18 +199,15 @@ Clipping is applied to this ratio using a hyperparameter $\epsilon$ to prevent e
 
 The second part is the critic loss:
 
-$$
-\mathcal{L}_{\text{critic}} = \frac{1}{N} \sum_{k=1}^{N} \left(V_i - R_i\right)^2
-$$
+![Critic loss formula](<Critic loss formula.png>)
 
 This loss is computed as the mean squared error (MSE)
 between the critic value estimate $V_i$ and the return-to-go $R_i$ from each state. The purpose of the critic loss is to train the critic network to make accurate predictions about the expected returns from each state. By minimizing this loss, the critic network brings the value estimate V closer to the actual return.
 
 Finally, we combine these two losses to get the total
 loss:
-$$
-\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{actor}} + 0.5\mathcal{L}_{\text{critic}}
-$$
+
+![Total loss formula](<Total loss formula.png>)
 
 By minimizing this total loss, we can update our policy taking into account all the constraints included in our initial problem.
 
@@ -229,7 +217,11 @@ We used Weights and Biases to visualize the training and evaluation performance 
 
 The proposed model's reward achieves convergence during training as illustrated by this chart of the training reward moving average, initially slightly negative and quickly converging to about 400:
 
-![Training reward moving average](<Training reward moving average.png>)
+<div style="flex: 48%;">
+    <p align="center">
+      <img src="Training reward moving average.png" alt="Training reward moving average" style="width: 60%;">
+    </p>
+</div>
 
 Furthermore, we analyzed the differences in evaluation
 rewards between the baseline model and the policy-
@@ -240,19 +232,23 @@ the latter model, with the highest reward being above 525. The rewards of the ba
 
   <div style="flex: 48%;">
     <p align="center">
-      <img src="Baseline evaluation reward moving average.png" alt="Baseline evaluation reward" style="width: 90%;">
+      <img src="Baseline evaluation reward moving average.png" alt="Baseline evaluation reward" style="width: 60%;">
       <br>
       Baseline (random actions)
     </p>
   </div>
 
+  <br>
+
   <div style="flex: 48%;">
     <p align="center">
-      <img src="PPO evaluation reward moving average.png" alt="PPO evaluation reward" style="width: 90%;">
+      <img src="PPO evaluation reward moving average.png" alt="PPO evaluation reward" style="width: 60%;">
       <br>
       Our model (PPO with clipped objective)
     </p>
   </div>
+
+  <br>
 
 </div>
 
@@ -266,88 +262,33 @@ different chords that weren't present in the original
 work. Our chords sounded pleasing, but also gave a
 different character to the piece. 
 
-<div style="display: flex; justify-content: space-between;">
-
-  <div style="flex: 48%;">
-    <p align="center">
-      <img src="Sonata 1 - Beginning - Original.png" alt="Sonata 1 - Beginning - Original" style="width: 90%;">
-      <br>
-      <audio controls>
-        <source src="Sonata 1 (beginning - original chords).wav" type="audio/wav">
-      </audio>
-      <br>
-      Sonata 1 - Beginning - Original work
-    </p>
-  </div>
-
-  <div style="flex: 48%;">
-    <p align="center">
-      <img src="Sonata 1 - Beginning - Our chords.png" alt="Sonata 1 - Beginning - Generated chords" style="width: 90%;">
-      <br>
-      <audio controls>
-        <source src="Sonata 1 (beginning - our chords).wav" type="audio/wav">
-      </audio>
-      <br>
-      Sonata 1 - Beginning - Generated chord progressions
-    </p>
-  </div>
+<div align="center">
+  
+  | Sonata 1 - Beginning - Original work | Sonata 1 - Beginning - Generated chord progressions |
+  |----------------------|----------------------|
+  | <p align="center">[Link to audio](Sonata%201%20(beginning%20-%20original%20chords).wav)|<p align="center">[Link to audio](Sonata%201%20(beginning%20-%20our%20chords).wav)|
+  | <p align="center"> <img src="Sonata 1 - Beginning - Original.png" alt="Sonata 1 - Beginning - Original" style="width: 90%;">|<p align="center"><img src="Sonata 1 - Beginning - Our chords.png" alt="Sonata 1 - Beginning - Generated chords" style="width: 90%;">|
 
 </div>
 
 The second Beethoven excerpt sounded a bit less satisfying since our generated chord progression did not start and end on the same chord. 
 
-
-<div style="display: flex; justify-content: space-between;">
-
-  <div style="flex: 48%;">
-    <p align="center">
-      <img src="Sonata 1 - End - Original.png" alt="Sonata 1 - End -  Original" style="width: 90%;">
-      <br>
-      <audio controls>
-        <source src="Sonata 1 (ending - original chords).wav" type="audio/wav">
-      </audio>
-      <br>
-      Sonata 1 - End - Original work
-    </p>
-  </div>
-
-  <div style="flex: 48%;">
-    <p align="center">
-      <img src="Sonata 1 - End - Generated chords.png" alt="Sonata 1 - End - Generated chords" style="width: 90%;">
-      <br>
-      <audio controls>
-        <source src="Sonata 1 (ending - our chords).wav" type="audio/wav">
-      </audio>
-      <br>
-      Sonata 1 - End - Generated chord progressions
-    </p>
-  </div>
+<div align="center">
+  
+  | Sonata 1 - End - Original work | Sonata 1 - End - Generated chord progressions |
+  |----------------------|----------------------|
+  | <p align="center">[Link to audio](Sonata%201%20(ending%20-%20original%20chords).wav)|<p align="center">[Link to audio](Sonata%201%20(ending%20-%20our%20chords).wav)|
+  | <p align="center"> <img src="Sonata 1 - End - Original.png" alt="Sonata 1 - End -  Original" style="width: 90%;">|<p align="center"><img src="Sonata 1 - End - Generated chords.png" alt="Sonata 1 - End - Generated chords" style="width: 90%;">|
 
 </div>
 
 The best chord progression however, was the one that our RL code created for our own melody. This can perhaps be attributed to the fact that our original melody was simpler than the Beethoven melodies and did not require as many chord changes.
 
-<div style="display: flex; justify-content: space-between;">
+<div align="center">
 
-  <div style="flex: 48%;">
-    <p align="center">
-      <audio controls>
-        <source src="Original Melody.wav" type="audio/wav">
-      </audio>
-      <br>
-      Our melody
-    </p>
-  </div>
-
-  <div style="flex: 48%;">
-    <p align="center">
-      <audio controls>
-        <source src="Original Melody with chords.wav" type="audio/wav">
-      </audio>
-      <br>
-      Our melody with model-generated chord progressions
-    </p>
-  </div>
+| Our melody | Our melody with generated chord progressions |
+|----------------------|----------------------|
+| <p align="center">[Link to audio](Original%20Melody.wav)|<p align="center">[Link to audio](Original%20Melody%20with%20chords.wav)|
 
 </div>
 
@@ -356,13 +297,12 @@ The best chord progression however, was the one that our RL code created for our
 One area of improvement could consist of broadening our problem not only to the choice of chords for the melody, but also of other parts. For example, training an agent that would be able to determine what bass line would go with those chords and melody or what drum part would
 appropriately fit the melody’s rhythm. This could produce the following excerpt (for our melody):
 
-<div style="flex: 48%;">
-    <p align="center">
-      <audio controls>
-        <source src="Original Melody with chords and future work.wav" type="audio/wav">
-      </audio>
-    </p>
-  </div>
+<div align="center">
+  
+  [Listen to the Original Melody with chords and future work](Original%20Melody%20with%20chords%20and%20future%20work.wav)
+
+</div>
+
 
 In addition, it would be great to extend our agent capabilities to enable the selection of a music genre (e.g. rock music, jazz, or classical music) to produce the optimal melody harmonization with respect to the selected
 genre, likely by utilizing different datasets (for
